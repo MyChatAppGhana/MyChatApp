@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyChatApp</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #d9dbd5;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      background: #efeae2;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+
+    .header {
+      height: 70px;
+      background: #075e54;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      gap: 12px;
+    }
+
+    .profile-button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .profile-pic {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid white;
+    }
+
+    .header-info {
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .header-info h2 {
+      font-size: 18px;
+    }
+
+    .header-info p {
+      font-size: 13px;
+      margin-top: 3px;
+      opacity: 0.9;
+    }
+
+    /* CHAT */
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background:
+        radial-gradient(
+          circle,
+          rgba(0,0,0,0.03) 1px,
+          transparent 1px
+        );
+      background-size: 20px 20px;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      word-wrap: break-word;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+    }
+
+    .sent {
+      background: #d9fdd3;
+      margin-left: auto;
+      border-bottom-right-radius: 2px;
+    }
+
+    .received {
+      background: white;
+      margin-right: auto;
+      border-bottom-left-radius: 2px;
+    }
+
+    .message-text {
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .message-time {
+      font-size: 10px;
+      color: #777;
+      text-align: right;
+      margin-top: 5px;
+    }
+
+    /* TYPING */
+
+    .typing {
+      display: none;
+      background: white;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      color: #777;
+      font-size: 13px;
+    }
+
+    /* INPUT */
+
+    .input-area {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      background: #f0f0f0;
+    }
+
+    #messageInput {
+      flex: 1;
+      border: none;
+      outline: none;
+      border-radius: 22px;
+      padding: 13px 16px;
+      font-size: 15px;
+    }
+
+    #sendButton {
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 50%;
+      background: #075e54;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    #sendButton:active {
+      transform: scale(0.94);
+    }
+
+    /* PROFILE PAGE */
+
+    .profile-page {
+      position: fixed;
+      inset: 0;
+      background: #f5f5f5;
+      display: none;
+      flex-direction: column;
+      z-index: 10;
+    }
+
+    .profile-top {
+      background: #075e54;
+      color: white;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .back-button {
+      background: transparent;
+      color: white;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    .profile-content {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .big-profile-pic {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid white;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+    }
+
+    .profile-content h1 {
+      margin-top: 20px;
+      font-size: 26px;
+    }
+
+    .profile-content p {
+      margin-top: 8px;
+      color: #666;
+    }
+
+    .profile-card {
+      margin-top: 25px;
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      text-align: left;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .profile-card strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    /* CLEAR CHAT */
+
+    .clear-button {
+      margin-top: 15px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 20px;
+      background: #d32f2f;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+      <button
+        class="profile-button"
+        id="openProfile"
+        aria-label="Open Mike profile"
+      >
+        <img
+          class="profile-pic"
+          src="https://i.pravatar.cc/300?img=12"
+          alt="Mike"
+        >
+      </button>
+
+      <div class="header-info" id="openProfileText">
+        <h2>Mike Galvan</h2>
+        <p id="onlineStatus">online</p>
+      </div>
+
+    </div>
+
+    <!-- MESSAGES -->
+
+    <div id="messages">
+
+      <div class="message received">
+
+        <div class="message-text">
+          Hello 👋 Welcome to MyChatApp!
+        </div>
+
+        <div class="message-time">
+          Now
+        </div>
+
+      </div>
+
+      <div
+        class="typing"
+        id="typing"
+      >
+        Mike is typing...
+      </div>
+
+    </div>
+
+    <!-- INPUT -->
+
+    <div class="input-area">
+
+      <input
+        type="text"
+        id="messageInput"
+        placeholder="Type a message..."
+        autocomplete="off"
+      >
+
+      <button
+        id="sendButton"
+        aria-label="Send message"
+      >
+        ➤
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- PROFILE PAGE -->
+
+  <div
+    class="profile-page"
+    id="profilePage"
+  >
+
+    <div class="profile-top">
+
+      <button
+        class="back-button"
+        id="backButton"
+      >
+        ←
+      </button>
+
+      <h2>Profile</h2>
+
+    </div>
+
+    <div class="profile-content">
+
+      <img
+        class="big-profile-pic"
+        src="https://i.pravatar.cc/300?img=12"
+        alt="Mike Galvan"
+      >
+
+      <h1>Mike Galvan</h1>
+
+      <p>Online</p>
+
+      <div class="profile-card">
+
+        <strong>About</strong>
+
+        <p>
+          Hey! I'm using MyChatApp 😊
+        </p>
+
+      </div>
+
+      <button
+        class="clear-button"
+        id="clearChat"
+      >
+        Clear Chat
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    /* ELEMENTS */
+
+    const input =
+      document.getElementById("messageInput");
+
+    const button =
+      document.getElementById("sendButton");
+
+    const messages =
+      document.getElementById("messages");
+
+    const typing =
+      document.getElementById("typing");
+
+    const profilePage =
+      document.getElementById("profilePage");
+
+    const openProfile =
+      document.getElementById("openProfile");
+
+    const openProfileText =
+      document.getElementById("openProfileText");
+
+    const backButton =
+      document.getElementById("backButton");
+
+    const clearChat =
+      document.getElementById("clearChat");
+
+
+    /* TIME */
+
+    function getTime() {
+
+      const now = new Date();
+
+      return now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+    }
+
+
+    /* SAVE CHAT */
+
+    function saveChat() {
+
+      localStorage.setItem(
+        "myChatMessages",
+        messages.innerHTML
+      );
+
+    }
+
+
+    /* LOAD CHAT */
+
+    function loadChat() {
+
+      const saved =
+        localStorage.getItem(
+          "myChatMessages"
+        );
+
+      if (saved) {
+
+        messages.innerHTML = saved;
+
+      }
+
+    }
+
+
+    /* SEND MESSAGE */
+
+    function sendMessage() {
+
+      const text =
+        input.value.trim();
+
+      if (text === "") {
+
+        return;
+
+      }
+
+
+      const message =
+        document.createElement("div");
+
+      message.className =
+        "message sent";
+
+      message.innerHTML = `
+        <div class="message-text">
+          ${text}
+        </div>
+
+        <div class="message-time">
+          ${getTime()} ✓✓
+        </div>
+      `;
+
+      messages.insertBefore(
+        message,
+        typing
+      );
+
+      input.value = "";
+
+      messages.scrollTop =
+        messages.scrollHeight;
+
+      saveChat();
+
+
+      /* MIKE TYPING */
+
+      typing.style.display =
+        "block";
+
+      messages.scrollTop =
+        messages.scrollHeight;
+
+
+      /* AUTOMATIC REPLY */
+
+      setTimeout(function() {
+
+        typing.style.display =
+          "none";
+
+
+        const reply =
+          document.createElement("div");
+
+        reply.className =
+          "message received";
+
+        reply.innerHTML = `
+          <div class="message-text">
+            Hey! Nice to hear from you 😊
+          </div>
+
+          <div class="message-time">
+            ${getTime()}
+          </div>
+        `;
+
+        messages.insertBefore(
+          reply,
+          typing
+        );
+
+        messages.scrollTop =
+          messages.scrollHeight;
+
+        saveChat();
+
+      }, 1500);
+
+    }
+
+
+    /* SEND BUTTON */
+
+    button.addEventListener(
+      "click",
+      sendMessage
+    );
+
+
+    /* ENTER KEY */
+
+    input.addEventListener(
+      "keydown",
+      function(event) {
+
+        if (event.key === "Enter") {
+
+          sendMessage();
+
+        }
+
+      }
+    );
+
+
+    /* OPEN PROFILE */
+
+    function showProfile() {
+
+      profilePage.style.display =
+        "flex";
+
+    }
+
+
+    openProfile.addEventListener(
+      "click",
+      showProfile
+    );
+
+
+    openProfileText.addEventListener(
+      "click",
+      showProfile
+    );
+
+
+    /* BACK */
+
+    backButton.addEventListener(
+      "click",
+      function() {
+
+        profilePage.style.display =
+          "none";
+
+      }
+    );
+
+
+    /* CLEAR CHAT */
+
+    clearChat.addEventListener(
+      "click",
+      function() {
+
+        const confirmClear =
+          confirm(
+            "Clear all chat messages?"
+          );
+
+        if (confirmClear) {
+
+          localStorage.removeItem(
+            "myChatMessages"
+          );
+
+          location.reload();
+
+        }
+
+      }
+    );
+
+
+    /* LOAD SAVED CHAT */
+
+    loadChat();
+
+  </script>
+
+</body>
+</html>
